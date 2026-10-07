@@ -1,0 +1,337 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  PASSENGER
+  DRIVER
+  ADMIN
+}
+
+enum ProjectStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_RIDE
+  OFFLINE
+}
+
+enum VehicleType {
+  MINI
+  SEDAN
+  SUV
+}
+
+enum RideStatus {
+  REQUESTED
+  DRIVER_ASSIGNED
+  DRIVER_ARRIVING
+  DRIVER_ARRIVED
+  STARTED
+  COMPLETED
+  CANCELLED
+}
+
+enum ContactRelationship {
+  PARENT
+  FRIEND
+  SIBLING
+  OTHER
+}
+
+enum SafetyEventType {
+  SOS
+  VEHICLE_MISMATCH
+  ROUTE_DEVIATION
+  USER_UNSAFE
+  REPORT_ISSUE
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  passwordHash    String
+  phoneNumber     String?
+  role            Role             @default(PASSENGER)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  projects        Project[]
+  tasks           Task[]
+  rides           Ride[]
+  pickupPhotos    PickupPhoto[]
+  safetyEvents    SafetyEvent[]
+  trustedContacts TrustedContact[]
+  chatSessions    ChatSession[]
+  rideRatings     RideRating[]
+  tripShares      TripShare[]
+
+  @@map("users")
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  status      ProjectStatus @default(NOT_STARTED)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("projects")
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  projectId   String
+  userId      String
+  name        String
+  description String?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(PENDING)
+  dueDate     DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@map("tasks")
+}
+
+model Driver {
+  id          String       @id @default(uuid())
+  name        String
+  photoUrl    String?
+  rating      Float        @default(5.0)
+  totalRides  Int          @default(0)
+  status      DriverStatus @default(AVAILABLE)
+  phoneNumber String
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  vehicle     Vehicle?
+  rides       Ride[]
+  ratings     RideRating[]
+
+  @@index([status])
+  @@map("drivers")
+}
+
+model Vehicle {
+  id            String      @id @default(uuid())
+  driverId      String      @unique
+  model         String
+  vehicleNumber String      @unique
+  color         String
+  type          VehicleType @default(SEDAN)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  driver        Driver      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@map("vehicles")
+}
+
+model Ride {
+  id              String                 @id @default(uuid())
+  userId          String
+  driverId        String?
+  pickup          String
+  destination     String
+  landmark        String?
+  rideType        VehicleType            @default(SEDAN)
+  status          RideStatus             @default(REQUESTED)
+  pin             String                 // 4-digit PIN for verification
+  fareEstimate    Float
+  baseFare        Float
+  distanceFare    Float
+  timeFare        Float
+  distanceKm      Float
+  durationMin     Float
+  vehicleMatches  Boolean?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  driver          Driver?                @relation(fields: [driverId], references: [id])
+  pickupPhotos    PickupPhoto[]
+  safetyEvents    SafetyEvent[]
+  ratings         RideRating[]
+  tripShares      TripShare[]
+  routeDeviations RouteDeviationEvent[]
+
+  @@index([userId])
+  @@index([driverId])
+  @@index([status])
+  @@map("rides")
+}
+
+model PickupPhoto {
+  id          String   @id @default(uuid())
+  rideId      String
+  userId      String
+  imageUrl    String
+  description String?
+  createdAt   DateTime @default(now())
+
+  ride        Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([rideId])
+  @@index([userId])
+  @@map("pickup_photos")
+}
+
+model SafetyEvent {
+  id        String          @id @default(uuid())
+  rideId    String?
+  userId    String
+  type      SafetyEventType
+  severity  String          @default("HIGH")
+  details   String?
+  status    String          @default("ACTIVE")
+  createdAt DateTime        @default(now())
+
+  ride      Ride?           @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([rideId])
+  @@index([userId])
+  @@map("safety_events")
+}
+
+model TrustedContact {
+  id           String              @id @default(uuid())
+  userId       String
+  name         String
+  phoneNumber  String
+  relationship ContactRelationship @default(OTHER)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("trusted_contacts")
+}
+
+model TripShare {
+  id         String   @id @default(uuid())
+  rideId     String
+  userId     String
+  shareToken String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  ride       Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([rideId])
+  @@index([shareToken])
+  @@map("trip_shares")
+}
+
+model RouteDeviationEvent {
+  id              String   @id @default(uuid())
+  rideId          String
+  expectedRoute   String?
+  simulatedRoute  String?
+  deviationMeters Float
+  status          String   @default("REPORTED")
+  createdAt       DateTime @default(now())
+
+  ride            Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@index([rideId])
+  @@map("route_deviation_events")
+}
+
+model ChatSession {
+  id        String        @id @default(uuid())
+  userId    String
+  title     String        @default("RideSafe Assistance")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  sessionId String
+  role      MessageRole @default(USER)
+  content   String
+  createdAt DateTime    @default(now())
+
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("chat_messages")
+}
+
+model RideRating {
+  id        String   @id @default(uuid())
+  rideId    String   @unique
+  userId    String
+  driverId  String
+  rating    Int
+  review    String?
+  createdAt DateTime @default(now())
+
+  ride      Ride     @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId])
+  @@index([userId])
+  @@map("ride_ratings")
+}

@@ -1,0 +1,26 @@
+flowchart TD
+    subgraph Safety["🛡️ Passenger Safety Architecture"]
+        AR([Active Ride In Progress]) --> VC[Vehicle Verification\nCheck License Plate & Model\nPOST /rides/:id/verify-vehicle]
+        VC --> VM{Plate Match?}
+        VM -- ❌ MISMATCH --> VME[VEHICLE_MISMATCH Event Logged\nSafety Center Alerted]
+        VM -- ✅ OK --> PIN[4-Digit Ride PIN Verification\nPOST /rides/:id/verify-pin\nRide cannot start without this]
+
+        AR --> RD[Route Deviation Monitor\nSimulated GPS Corridor Check\nPOST /rides/:id/route-check]
+        RD --> RDA{Deviation > 150m?}
+        RDA -- ⚠️ Yes --> RDE[ROUTE_DEVIATION Event Logged\nPassenger Alerted]
+        RDA -- ✅ No --> ROK[Route Normal]
+
+        AR --> SC[Safety Center]
+        SC --> SOS[🚨 ONE-TAP SOS\nPOST /rides/:id/sos\nSafetyEvent type=SOS logged]
+        SC --> UNS[✋ I Don't Feel Safe\nSafetyEvent type=USER_UNSAFE]
+        SC --> SHARE[📲 Share Live Trip\nPOST /rides/:id/share\nUnique shareToken generated\n24h expiry]
+        SC --> TC[Trusted Contacts\nPARENT · FRIEND · SIBLING · OTHER\nGET/POST /trusted-contacts]
+
+        SOS --> ALERT[Emergency Signal Broadcast\nSafety Event Persisted in DB\n⚠️ Users must call 112 in real emergencies]
+        SHARE --> PUBLIC[Public Trip URL\nGET /api/shared-trip/:token\nNo auth required for tracking]
+    end
+
+    style AR fill:#EF476F,color:#fff
+    style SOS fill:#EF476F,color:#fff
+    style ALERT fill:#1C2541,color:#FFD166,stroke:#EF476F
+    style PUBLIC fill:#1C2541,color:#06D6A0

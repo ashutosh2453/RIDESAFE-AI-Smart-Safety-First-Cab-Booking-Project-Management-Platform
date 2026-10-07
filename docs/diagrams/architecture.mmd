@@ -1,0 +1,76 @@
+graph TB
+    subgraph Clients
+        WEB[🌐 Web App<br/>React + Vite + TypeScript<br/>localhost:5173]
+        MOB[📱 Android App<br/>Expo React Native<br/>TypeScript]
+    end
+
+    subgraph Backend["🔧 Backend REST API — Node.js / Express / TypeScript (localhost:5000)"]
+        AUTH[/auth\nJWT Authentication\nbcrypt hashing]
+        RIDES[/rides\nBooking • PIN • Lifecycle\nFare Calculation]
+        DRIVERS[/drivers\nSmartMatch Algorithm\nAvailability]
+        SAFETY[/contacts /rides/:id/sos\nSafety Events • SOS\nRoute Deviation]
+        PROJ[/projects\nCRUD • Status\nSearch & Filter]
+        TASKS[/tasks\nCRUD • Priority • Status\nDue Dates]
+        DASH[/dashboard\nMetrics • Analytics]
+        AI[/ai/chat\nKnowledge Engine\nOpenAI Fallback]
+        UPLOAD[/uploads\nPickup Photo Upload\nMulter]
+    end
+
+    subgraph Database["🗃️ PostgreSQL — Prisma ORM"]
+        USERS[(users)]
+        PROJECTS[(projects)]
+        TASKS_T[(tasks)]
+        RIDES_T[(rides)]
+        DRIVERS_T[(drivers)]
+        VEHICLES_T[(vehicles)]
+        SAFETY_T[(safety_events)]
+        CONTACTS[(trusted_contacts)]
+        PHOTOS[(pickup_photos)]
+        SESSIONS[(chat_sessions)]
+        MESSAGES[(chat_messages)]
+        RATINGS[(ride_ratings)]
+        SHARES[(trip_shares)]
+        ROUTE_DEV[(route_deviation_events)]
+    end
+
+    WEB -->|"REST API — axios + JWT Bearer"| AUTH
+    MOB -->|"REST API — axios + AsyncStorage JWT"| AUTH
+    WEB --> RIDES
+    MOB --> RIDES
+    WEB --> DRIVERS
+    MOB --> DRIVERS
+    WEB --> SAFETY
+    MOB --> SAFETY
+    WEB --> PROJ
+    MOB --> PROJ
+    WEB --> TASKS
+    MOB --> TASKS
+    WEB --> DASH
+    MOB --> DASH
+    WEB --> AI
+    MOB --> AI
+    WEB --> UPLOAD
+
+    AUTH --> USERS
+    RIDES --> RIDES_T
+    RIDES --> DRIVERS_T
+    DRIVERS --> DRIVERS_T
+    DRIVERS --> VEHICLES_T
+    SAFETY --> SAFETY_T
+    SAFETY --> CONTACTS
+    SAFETY --> SHARES
+    SAFETY --> ROUTE_DEV
+    PROJ --> PROJECTS
+    TASKS --> TASKS_T
+    AI --> SESSIONS
+    AI --> MESSAGES
+    UPLOAD --> PHOTOS
+    DASH --> USERS
+    DASH --> RIDES_T
+    DASH --> PROJECTS
+    DASH --> TASKS_T
+    RIDES --> RATINGS
+
+    style Clients fill:#0B132B,color:#06D6A0,stroke:#06D6A0
+    style Backend fill:#1C2541,color:#FFFFFF,stroke:#3A86FF
+    style Database fill:#0B132B,color:#00F5D4,stroke:#00F5D4

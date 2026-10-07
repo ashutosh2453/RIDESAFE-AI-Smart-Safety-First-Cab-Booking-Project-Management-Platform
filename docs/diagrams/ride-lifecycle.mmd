@@ -1,0 +1,30 @@
+stateDiagram-v2
+    [*] --> REQUESTED : POST /api/rides\nRide booked, PIN generated
+
+    REQUESTED --> DRIVER_ASSIGNED : Driver matched via SmartMatch
+    REQUESTED --> CANCELLED : Passenger cancels
+
+    DRIVER_ASSIGNED --> DRIVER_ARRIVING : Driver accepts & heads to pickup
+    DRIVER_ASSIGNED --> CANCELLED : Cancelled before driver departs
+
+    DRIVER_ARRIVING --> DRIVER_ARRIVED : Driver reaches pickup zone
+
+    DRIVER_ARRIVED --> STARTED : PIN Verified ✅\nVehicle Confirmed ✅\nPOST /rides/:id/verify-pin
+
+    DRIVER_ARRIVED --> CANCELLED : Passenger or driver cancels
+
+    STARTED --> COMPLETED : POST /rides/:id/complete\nRide finishes
+
+    STARTED --> CANCELLED : Emergency cancellation
+
+    COMPLETED --> [*] : Optional rating submitted
+
+    CANCELLED --> [*]
+
+    note right of STARTED
+        Safety monitoring active:
+        • Route deviation alerts
+        • SOS available
+        • Live trip share
+        • "I Don't Feel Safe"
+    end note

@@ -1,0 +1,37 @@
+flowchart LR
+    subgraph Input["📥 SmartMatch Inputs"]
+        P[Pickup Location]
+        D[Destination]
+        VT[Vehicle Type\nMINI · SEDAN · SUV]
+    end
+
+    subgraph Pool["🚗 Driver Pool"]
+        DRV[(Available Drivers\nfrom PostgreSQL\nstatus = AVAILABLE)]
+    end
+
+    subgraph Scoring["🧮 Scoring Engine — computeSmartMatch()"]
+        S1["📍 Distance Score — Weight 30%\nFormula: max(10, min(100, 100 - distKm×10))\n0km→100pts · 5km→50pts · 10km+→10pts"]
+        S2["⏱️ ETA Score — Weight 25%\nFormula: max(10, min(100, 100 - etaMin×7))\n2min→86pts · 10min→30pts"]
+        S3["⭐ Rating Score — Weight 20%\nFormula: (driver.rating / 5.0) × 100\n5.0★→100pts · 4.0★→80pts · 3.0★→60pts"]
+        S4["🟢 Availability Score — Weight 15%\nAVAILABLE→100pts\nON_RIDE→30pts\nOFFLINE→0pts"]
+        S5["🚘 Vehicle Match Score — Weight 10%\nExact type match→100pts\nDifferent class→70pts\nNo vehicle→60pts"]
+
+        FORMULA["🎯 Composite Score\nScore = S1×0.30 + S2×0.25 + S3×0.20 + S4×0.15 + S5×0.10\nResult: 0–100 integer"]
+    end
+
+    subgraph Output["📤 Output"]
+        RANKED[Drivers ranked by SmartMatch Score\nHighest score → isRecommended=true]
+        REC[Recommended Driver Card\nAlternative Drivers List\nScore Breakdown Visible]
+    end
+
+    Input --> Pool
+    Pool --> S1
+    Pool --> S2
+    Pool --> S3
+    Pool --> S4
+    Pool --> S5
+    S1 & S2 & S3 & S4 & S5 --> FORMULA
+    FORMULA --> RANKED --> REC
+
+    style FORMULA fill:#0B132B,color:#06D6A0,stroke:#06D6A0
+    style REC fill:#1C2541,color:#00F5D4,stroke:#00F5D4

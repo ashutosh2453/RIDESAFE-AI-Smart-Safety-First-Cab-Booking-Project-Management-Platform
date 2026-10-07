@@ -1,0 +1,25 @@
+flowchart TD
+    C([Client — Web or Android]) --> REQ[HTTP Request with Bearer JWT]
+    REQ --> MW[authenticate middleware\nsrc/middleware/auth.ts]
+    MW --> VLD{Valid JWT?}
+    VLD -- ❌ No --> 401[401 Unauthorized]
+    VLD -- ✅ Yes --> ZOD[Zod Schema Validation\nsrc/middleware/validate.ts\nsrc/validators/index.ts]
+    ZOD --> ZR{Valid Body?}
+    ZR -- ❌ Invalid --> 400[400 Bad Request\nStructured error payload]
+    ZR -- ✅ Valid --> CTRL[Controller\nsrc/controllers/]
+    CTRL --> SVC[Service Layer\nsrc/services/]
+    SVC --> OWN{Ownership Check\nuserId matches?}
+    OWN -- ❌ Not Owner --> 403[403 Forbidden]
+    OWN -- ✅ Authorized --> ORM[Prisma ORM\nsrc/config/db.ts]
+    ORM --> PSQL[(PostgreSQL)]
+    PSQL --> ORM
+    ORM --> SVC
+    SVC --> CTRL
+    CTRL --> RES[Structured JSON Response\n{ success, data, message }]
+    RES --> C
+
+    style 401 fill:#EF476F,color:#fff
+    style 400 fill:#FFD166,color:#0B132B
+    style 403 fill:#EF476F,color:#fff
+    style C fill:#06D6A0,color:#0B132B
+    style PSQL fill:#0B132B,color:#00F5D4,stroke:#00F5D4

@@ -1,0 +1,56 @@
+sequenceDiagram
+    participant C as 🌐 Client (Web/Android)
+    participant API as 🔧 Express REST API
+    participant AUTH as 🔐 Auth Middleware
+    participant SVC as ⚙️ Service Layer
+    participant DB as 🗃️ PostgreSQL (Prisma)
+    participant AI as 🤖 AI Provider (OpenAI)
+
+    Note over C,DB: Auth Flow
+    C->>API: POST /api/auth/login {email, password}
+    API->>SVC: authService.login()
+    SVC->>DB: SELECT user WHERE email=?
+    DB-->>SVC: User record
+    SVC->>SVC: bcrypt.compare(password, hash)
+    SVC-->>API: JWT token + user
+    API-->>C: { success: true, data: { token, user } }
+
+    Note over C,DB: Protected Ride Booking Flow
+    C->>API: POST /api/rides/book {pickup, destination, rideType, driverId}
+    API->>AUTH: authenticate(req) — verify JWT Bearer
+    AUTH->>DB: verify token signature + user exists
+    AUTH-->>API: req.user = { id, role }
+    API->>SVC: rideService.bookRide(userId, data)
+    SVC->>SVC: calculateEstimatedFare(pickup, dest, type)
+    SVC->>DB: INSERT INTO rides {userId, driverId, pin, fareEstimate...}
+    DB-->>SVC: Created ride record
+    SVC-->>API: ride with driver + vehicle
+    API-->>C: { success: true, data: ride }
+
+    Note over C,DB: AI Chat Flow
+    C->>API: POST /api/ai/chat {message, sessionId?}
+    API->>AUTH: authenticate(req)
+    AUTH-->>API: req.user
+    API->>SVC: aiService.handleChat(userId, message)
+    SVC->>DB: Get or create ChatSession
+    SVC->>DB: INSERT ChatMessage (role=USER)
+    alt AI_API_KEY configured
+        SVC->>AI: POST /v1/chat/completions {model: gpt-4o-mini}
+        AI-->>SVC: AI response text
+    else No API key (default)
+        SVC->>SVC: generateKnowledgeResponse(query)\nRule-based contextual engine
+    end
+    SVC->>DB: INSERT ChatMessage (role=ASSISTANT, content=reply)
+    SVC-->>API: { sessionId, reply, createdAt }
+    API-->>C: { success: true, data: result }
+
+    Note over C,DB: Cross-Platform Sync
+    C->>API: PATCH /api/tasks/:id {status: COMPLETED}
+    API->>AUTH: authenticate
+    AUTH-->>API: req.user
+    API->>SVC: taskService.update(userId, taskId, data)
+    SVC->>DB: UPDATE tasks SET status=COMPLETED
+    DB-->>SVC: Updated task
+    SVC-->>API: task
+    API-->>C: { success: true, data: task }
+    Note over C: ✅ Web AND Android see same updated task

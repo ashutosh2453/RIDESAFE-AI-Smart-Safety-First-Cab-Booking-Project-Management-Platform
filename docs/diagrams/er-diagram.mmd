@@ -1,0 +1,171 @@
+erDiagram
+    User {
+        uuid id PK
+        string name
+        string email UK
+        string passwordHash
+        string phoneNumber
+        enum role "PASSENGER|DRIVER|ADMIN"
+        datetime createdAt
+        datetime updatedAt
+    }
+    Project {
+        uuid id PK
+        uuid userId FK
+        string name
+        string description
+        enum status "NOT_STARTED|IN_PROGRESS|COMPLETED"
+        datetime startDate
+        datetime endDate
+        datetime createdAt
+        datetime updatedAt
+    }
+    Task {
+        uuid id PK
+        uuid projectId FK
+        uuid userId FK
+        string name
+        string description
+        enum priority "LOW|MEDIUM|HIGH"
+        enum status "PENDING|IN_PROGRESS|COMPLETED"
+        datetime dueDate
+        datetime createdAt
+        datetime updatedAt
+    }
+    Driver {
+        uuid id PK
+        string name
+        string photoUrl
+        float rating
+        int totalRides
+        enum status "AVAILABLE|ON_RIDE|OFFLINE"
+        string phoneNumber
+        float latitude
+        float longitude
+        datetime createdAt
+        datetime updatedAt
+    }
+    Vehicle {
+        uuid id PK
+        uuid driverId FK UK
+        string model
+        string vehicleNumber UK
+        string color
+        enum type "MINI|SEDAN|SUV"
+        datetime createdAt
+        datetime updatedAt
+    }
+    Ride {
+        uuid id PK
+        uuid userId FK
+        uuid driverId FK
+        string pickup
+        string destination
+        string landmark
+        enum rideType "MINI|SEDAN|SUV"
+        enum status "REQUESTED|DRIVER_ASSIGNED|DRIVER_ARRIVING|DRIVER_ARRIVED|STARTED|COMPLETED|CANCELLED"
+        string pin
+        float fareEstimate
+        float baseFare
+        float distanceFare
+        float timeFare
+        float distanceKm
+        float durationMin
+        boolean vehicleMatches
+        datetime startedAt
+        datetime completedAt
+        datetime cancelledAt
+        datetime createdAt
+        datetime updatedAt
+    }
+    PickupPhoto {
+        uuid id PK
+        uuid rideId FK
+        uuid userId FK
+        string imageUrl
+        string description
+        datetime createdAt
+    }
+    SafetyEvent {
+        uuid id PK
+        uuid rideId FK
+        uuid userId FK
+        enum type "SOS|VEHICLE_MISMATCH|ROUTE_DEVIATION|USER_UNSAFE|REPORT_ISSUE"
+        string severity
+        string details
+        string status
+        datetime createdAt
+    }
+    TrustedContact {
+        uuid id PK
+        uuid userId FK
+        string name
+        string phoneNumber
+        enum relationship "PARENT|FRIEND|SIBLING|OTHER"
+        datetime createdAt
+        datetime updatedAt
+    }
+    TripShare {
+        uuid id PK
+        uuid rideId FK
+        uuid userId FK
+        string shareToken UK
+        datetime expiresAt
+        datetime createdAt
+    }
+    RouteDeviationEvent {
+        uuid id PK
+        uuid rideId FK
+        string expectedRoute
+        string simulatedRoute
+        float deviationMeters
+        string status
+        datetime createdAt
+    }
+    ChatSession {
+        uuid id PK
+        uuid userId FK
+        string title
+        datetime createdAt
+        datetime updatedAt
+    }
+    ChatMessage {
+        uuid id PK
+        uuid sessionId FK
+        enum role "USER|ASSISTANT|SYSTEM"
+        string content
+        datetime createdAt
+    }
+    RideRating {
+        uuid id PK
+        uuid rideId FK UK
+        uuid userId FK
+        uuid driverId FK
+        int rating
+        string review
+        datetime createdAt
+    }
+
+    User ||--o{ Project : "owns"
+    User ||--o{ Task : "owns"
+    User ||--o{ Ride : "books"
+    User ||--o{ TrustedContact : "manages"
+    User ||--o{ ChatSession : "starts"
+    User ||--o{ PickupPhoto : "uploads"
+    User ||--o{ SafetyEvent : "triggers"
+    User ||--o{ RideRating : "rates"
+    User ||--o{ TripShare : "shares"
+
+    Project ||--o{ Task : "contains"
+
+    Driver ||--o| Vehicle : "drives"
+    Driver ||--o{ Ride : "assigned to"
+    Driver ||--o{ RideRating : "receives"
+
+    Ride ||--o{ PickupPhoto : "has"
+    Ride ||--o{ SafetyEvent : "triggers"
+    Ride ||--o| RideRating : "rated by"
+    Ride ||--o{ TripShare : "shared via"
+    Ride ||--o{ RouteDeviationEvent : "logs"
+
+    ChatSession ||--o{ ChatMessage : "contains"

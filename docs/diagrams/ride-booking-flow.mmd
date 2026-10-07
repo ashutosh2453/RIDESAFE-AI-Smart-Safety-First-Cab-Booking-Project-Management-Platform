@@ -1,0 +1,33 @@
+flowchart TD
+    A([👤 Passenger Opens Web / Android]) --> B[Enter Pickup Location\nEnter Destination\nOptional Landmark]
+    B --> C[Select Vehicle Type\nMINI · SEDAN · SUV]
+    C --> D[⚡ Click SmartMatch & Calculate]
+    D --> E[Backend POST /drivers/smartmatch\nFare estimated using formula\nBase₹80 + Distance×15 + Duration×2.5 × Multiplier]
+    E --> F[SmartMatch Algorithm Scores All Available Drivers\nDistance 30% · ETA 25% · Rating 20%\nAvailability 15% · Vehicle Match 10%]
+    F --> G[Top Ranked Driver Recommended\nAlternatives Shown with Scores]
+    G --> H{Passenger Accepts?}
+    H -- No --> C
+    H -- Yes --> I[Confirm Booking\nPOST /api/rides]
+    I --> J[Backend Creates Ride Record\nGenerates Secure 4-Digit PIN\nAssigns Selected Driver]
+    J --> K[REQUESTED → DRIVER_ASSIGNED]
+    K --> L[🔒 Active Ride Screen Opens\nPIN Displayed Prominently]
+    L --> M[Passenger Checks Driver Card\nVerifies License Plate & Model\nPOST /rides/:id/verify-vehicle]
+    M --> N{Vehicle Matches?}
+    N -- ❌ Mismatch --> O[Safety Event Logged\nVEHICLE_MISMATCH\nSafety Center Alerted]
+    N -- ✅ Match --> P[Passenger Gives PIN to Driver]
+    P --> Q[Driver Enters PIN\nPOST /rides/:id/verify-pin]
+    Q --> R[STARTED]
+    R --> S{Ride in Progress}
+    S --> T[Route Deviation Monitor\nPOST /rides/:id/route-check\nAlert if > 150m deviation]
+    S --> U[Safety Center Available\nSOS · I Dont Feel Safe\nShare Live Trip]
+    T --> V[Complete\nPOST /rides/:id/complete]
+    U --> V
+    V --> W[COMPLETED]
+    W --> X[POST /rides/:id/rating\nPassenger rates driver 1–5 ⭐]
+    X --> Y([✅ Ride History Updated])
+
+    style A fill:#06D6A0,color:#0B132B
+    style Y fill:#06D6A0,color:#0B132B
+    style O fill:#EF476F,color:#fff
+    style R fill:#3A86FF,color:#fff
+    style W fill:#06D6A0,color:#0B132B
