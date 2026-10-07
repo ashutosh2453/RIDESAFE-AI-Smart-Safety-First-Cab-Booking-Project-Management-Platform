@@ -243,16 +243,58 @@ Testing RideSafe AI Backend Endpoints...
 
 ---
 
-## 📚 Supporting Documentation
-
 - [System Architecture Deep-Dive](docs/ARCHITECTURE.md)
 - [REST API Specification](docs/API_DOCUMENTATION.md)
 - [Database Schema & ER Reference](docs/DATABASE_SCHEMA.md)
 - [Passenger Safety Architecture & Protocols](docs/SAFETY_SYSTEM.md)
 - [SmartMatch & Fare Engine Specification](docs/SMARTMATCH_ALGORITHM.md)
 - [Android Mobile App Guide (Expo & React Native)](docs/MOBILE_APP_GUIDE.md)
-- [Production Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
+- [Vercel Production Deployment Guide](docs/DEPLOYMENT.md)
 - [Automated Testing & Verification Report](docs/TESTING_REPORT.md)
+
+---
+
+## 🚀 Vercel Deployment
+
+RideSafe AI is architected for native deployment on **Vercel** using **Vercel Services** multi-service orchestration:
+
+```
+              ┌──────────────────────────────────────┐
+              │                VERCEL                │
+              │                                      │
+Browser ─────►│ 🌐 Web Service (Vite / React)        │
+              │    │                                 │
+              │    │ /api/* (Rewritten)              │
+              │    ▼                                 │
+              │ 🔧 Backend Service (Express)         │
+              └──────────────┬───────────────────────┘
+                             │
+                             ▼
+                     🐘 PostgreSQL (Remote)
+
+Android Mobile ──────────────► /api/* (Remote Backend)
+```
+
+### 1. Multi-Service Configuration (`vercel.json`)
+The root `vercel.json` coordinates both services:
+- **Service `backend`**: Express REST API located in `/backend` serving `/api/*`.
+- **Service `web`**: Vite/React SPA located in `/web` serving all other paths `/*`.
+- **Android App**: Standalone mobile client (NOT a Vercel service) connecting to `https://YOUR-VERCEL-DOMAIN/api`.
+
+### 2. Required Vercel Environment Variables
+
+#### For Backend Service:
+- `DATABASE_URL` — Connection string to cloud PostgreSQL (e.g., Neon, Supabase) with SSL mode enabled.
+- `JWT_SECRET` — 64-character secret for signing JWT tokens.
+- `JWT_EXPIRES_IN` — Token lifespan (e.g. `7d`).
+- `CORS_ORIGIN` — Production domain(s), e.g. `https://your-domain.vercel.app`.
+- `AI_API_KEY` — *(Optional)* External OpenAI API key for RideSafe AI Assistant.
+
+#### For Web Service:
+- `VITE_API_URL` — Set to `/api` (automatically routes calls on the shared domain).
+
+👉 **Complete Step-by-Step Deployment Instructions**: See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
 
 ---
 

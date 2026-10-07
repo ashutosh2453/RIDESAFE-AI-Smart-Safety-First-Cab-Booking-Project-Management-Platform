@@ -17,6 +17,7 @@ const router = Router();
 router.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'online',
+    ok: true,
     platform: 'RideSafe AI Engine',
     timestamp: new Date().toISOString(),
   });

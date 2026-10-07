@@ -2,10 +2,11 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-// In Android emulator 10.0.2.2 points to host machine localhost:5000.
-// In iOS or web simulator localhost:5000 works.
+// Configurable via EXPO_PUBLIC_API_URL for production or physical devices.
+// Falls back to emulator loopback 10.0.2.2 on Android and localhost on iOS/Web.
 export const DEFAULT_API_URL =
-  Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api';
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === 'android' ? 'http://10.0.2.2:5000/api' : 'http://localhost:5000/api');
 
 export const api = axios.create({
   baseURL: DEFAULT_API_URL,

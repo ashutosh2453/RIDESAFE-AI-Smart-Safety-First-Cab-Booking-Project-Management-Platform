@@ -4,9 +4,15 @@ import fs from 'fs';
 import crypto from 'crypto';
 import { config } from '../config';
 
-const uploadDir = path.resolve(config.uploadDir);
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const defaultUploadDir = process.env.VERCEL ? '/tmp/uploads' : config.uploadDir;
+const uploadDir = path.resolve(process.env.UPLOAD_DIR || defaultUploadDir);
+
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn('⚠️ Warning: Could not initialize local upload directory:', err);
 }
 
 const storage = multer.diskStorage({
