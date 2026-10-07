@@ -244,6 +244,7 @@ Testing RideSafe AI Backend Endpoints...
 ---
 
 - [System Architecture Deep-Dive](docs/ARCHITECTURE.md)
+- [REST API Reference & Endpoints Guide](docs/API.md)
 - [REST API Specification](docs/API_DOCUMENTATION.md)
 - [Database Schema & ER Reference](docs/DATABASE_SCHEMA.md)
 - [Passenger Safety Architecture & Protocols](docs/SAFETY_SYSTEM.md)
